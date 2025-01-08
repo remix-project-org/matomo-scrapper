@@ -7,13 +7,12 @@ async function dlRawData() {
     try {
         console.log('API KEY', process.env.MATOMO_API_KEY)
         fs.mkdir('data')
-        // token_auth=f7e336d4005db3206f904b04aa412159" --data "idSite=23&period=day&date=yesterday&filter_limit=1000&filter_offset=40000"
         const filterLimit = 1000
         let offset = 0    
         while (true) {
             console.log(offset)
             const postRequestData = {
-                token_auth: 'f7e336d4005db3206f904b04aa412159',
+                token_auth: process.env.MATOMO_API_KEY,
                 idSite: 23,
                 period: 'day',
                 date: 'yesterday',
