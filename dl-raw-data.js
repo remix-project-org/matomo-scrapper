@@ -1,12 +1,15 @@
 const fs = require('fs').promises; // Use the promise-based version of fs
+require('dotenv').config()
 const axios = require('axios');
 const { spawnSync } = require('child_process');
 
 async function dlRawData() {
     try {
+        console.log('API KEY', process.env.MATOMO_API_KEY)
+        fs.mkdir('data')
         // token_auth=f7e336d4005db3206f904b04aa412159" --data "idSite=23&period=day&date=yesterday&filter_limit=1000&filter_offset=40000"
         const filterLimit = 1000
-        let offset = 0        
+        let offset = 0    
         while (true) {
             console.log(offset)
             const postRequestData = {
@@ -18,7 +21,7 @@ async function dlRawData() {
                 filter_offset: offset
             }   
             const response =  spawnSync(
-                `curl -X POST "https://ethereumfoundation.matomo.cloud/index.php?module=API&method=Live.getLastVisitsDetails&format=JSON" --data "idSite=23&period=day&date=yesterday&filter_limit=${filterLimit}&filter_offset=${offset}&token_auth=f7e336d4005db3206f904b04aa412159" >> data/matomo_${offset}.json`, { shell:true })
+                `curl -X POST "https://ethereumfoundation.matomo.cloud/index.php?module=API&method=Live.getLastVisitsDetails&format=JSON" --data "idSite=23&period=day&date=yesterday&filter_limit=${filterLimit}&filter_offset=${offset}&token_auth=${process.env.MATOMO_API_KEY}" --output ./data/matomo_${offset}.json`, { shell:true })
             const data = await fs.readFile(`data/matomo_${offset}.json`, 'utf8');
             if (data === '[]') {
                 break
