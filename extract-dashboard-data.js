@@ -42,7 +42,7 @@ function convertJsonToCsv(jsonData) {
 
 const getData = async (date, csvs) => {
     console.log(`getting ${date}`)
-    const ret = await fetch(`https://ethereumfoundation.matomo.cloud/index.php?module=API&method=Events.getName&idSite=23&period=day&date=${date}&format=JSON&token_auth=${process.env.MATOMO_API_KEY}&force_api_session=1&secondaryDimension=eventAction&flat=1`)
+    const ret = await fetch(`https://ethereumfoundation.matomo.cloud/index.php?module=API&method=Events.getName&idSite=23&period=day&date=${date}&format=JSON&token_auth=${process.env.MATOMO_API_KEY}&force_api_session=1&secondaryDimension=eventAction&flat=1&filter_limit=100000`)
     const retJson = await ret.json()
     
     for (const entry of retJson) {
