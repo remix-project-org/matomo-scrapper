@@ -1,5 +1,6 @@
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-const fs = require('fs')
+const fs = require('fs').promises
+const { spawnSync } = require('child_process');
 
 require('dotenv').config()
 
@@ -40,39 +41,71 @@ function convertJsonToCsv(jsonData) {
     return csvContent;
   }
 
-const getData = async (date, csvs) => {
+const ite = {}
+const getData = async (date, csvs, filter) => {
     console.log(`getting ${date}`)
-    const ret = await fetch(`https://ethereumfoundation.matomo.cloud/index.php?module=API&method=Events.getName&idSite=23&period=day&date=${date}&format=JSON&token_auth=${process.env.MATOMO_API_KEY}&force_api_session=1&secondaryDimension=eventAction&flat=1&filter_limit=100000`)
-    const retJson = await ret.json()
+
+    // const response =  spawnSync(
+    //                `curl -X POST "https://ethereumfoundation.matomo.cloud/index.php?module=API&method=Events.getName&idSite=23&period=day&date=${date}&format=JSON&token_auth=${process.env.MATOMO_API_KEY}&force_api_session=1&secondaryDimension=eventAction&flat=1&filter_limit=100000" --output ./dashboard_data.json`, { shell:true })
     
+    const ret = await fetch(`https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=yesterday&method=Live.getLastVisitsDetails&filter_limit=10&expanded=1&segment=eventAction%3D%3DsendTransaction-from-gui%3BeventAction%3D%3DsendTransaction-from-gui&showMetadata=0&token_auth=${process.env.MATOMO_API_KEY}`) // https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&method=Live.getLastVisitsDetails&date=${date}&filter_limit=100000&expanded=1&segment=eventAction%3D%3DsendTransaction-from-gui%3BeventAction%3D%3DsendTransaction-from-gui&showMetadata=0&token_auth=${process.env.MATOMO_API_KEY}`)
+    
+    // const data = await fs.readFile(`dashboard_data.json`, 'utf8');
+    let retJson = []
+    try {
+        const txt = await ret.text()
+        retJson = JSON.parse(txt)
+    } catch (e) {
+        console.log(e)
+        return
+    }
+    
+    await fs.writeFile(`data/raw-${date}.json`, JSON.stringify(retJson, null, '\t'))
     for (const entry of retJson) {
-        // console.log(entry)
-        if (filter_deployContractTo(entry)) {
+        if (filter(entry)) {
+            // console.log(entry.Events_EventName)
+            if (!ite[entry.label]) ite[entry.label] = parseInt(entry.nb_events)
+            else ite[entry.label] = ite[entry.label] + parseInt(entry.nb_events)
+            // console.log(entry)
+
             if (!csvs[entry.label]) csvs[entry.label] = []
             csvs[entry.label].push({ Date: date, nb_events: entry.nb_events })
         }
     }
+    
 }
 
-const run = async (startDate, endDate) => {
+let it = 0
+const run = async (startDate, endDate, filter) => {
     const csvs = {}
     let currentDate = new Date(startDate);
     while (currentDate <= endDate) {
         const formattedDate = currentDate.toISOString().split('T')[0];
-        await getData(formattedDate, csvs);
+        await getData(formattedDate, csvs, filter);
         currentDate.setDate(currentDate.getDate() + 1);
     }
-    console.log(csvs, Object.keys(csvs).length)
-    const content = convertJsonToCsv(csvs)
-    fs.writeFileSync('data/deployContractTo.csv', content)
+    // console.log(csvs, Object.keys(csvs).length)
+    // console.log('____________________')
+    // console.log(csvs['Main (1) network - DeployContractTo'])
+    // const content = convertJsonToCsv(csvs)
+    // fs.writeFile('data/transactions.csv', content)
+    fs.writeFile('data/transactions.json', JSON.stringify(csvs, null, '\t'))
+    fs.writeFile('data/networks.json', JSON.stringify(ite, null, '\t'))
+    console.log('it', it)
 }
 
-const startDate = new Date(2025, 0, 1)
+console.log('API KEY', process.env.MATOMO_API_KEY)
+const startDate = new Date(2025, 8, 22)
 console.log(startDate)
 const endDate = new Date()
-run(startDate, endDate).catch(console.error);
 
-const filter_deployContractTo = (entry) => {
-    return entry.Events_EventAction === 'DeployContractTo'
-}
+const eventsAction = ['DeployContractTo', 'transact', 'call', 'send', 'sendTransaction-from-gui', 'sendTransaction-from-plugin']
+
+run(startDate, endDate, (entry) => {
+    /*if (entry.Events_EventName.startsWith('0x') && entry.Events_EventCategory === 'udapp') {
+        it++
+        return true
+    }*/
+    return eventsAction.includes(entry.Events_EventAction)
+}).catch(console.error);
 
