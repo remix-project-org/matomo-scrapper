@@ -10,7 +10,7 @@ const getChunkData = async (date, offset) => {
     console.log(`getting segment data for date ${date}`)
     console.log(`Fetching chunk at offset ${offset}...`)
     
-    const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=Live.getLastVisitsDetails&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&method=Live.getLastVisitsDetails&token_auth=${process.env.MATOMO_API_KEY}`
+    const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=Live.getLastVisitsDetails&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&token_auth=${process.env.MATOMO_API_KEY}`
     // const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=Live.getLastVisitsDetails&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&expanded=1&segment=eventAction%3D%3DsendTransaction-from-gui%3BeventName%3D%24-56,eventName%3D%24-97%3BeventAction%3D%3DsendTransaction-from-gui,eventAction%3D%3DsendTransaction-from-plugin&showMetadata=0&token_auth=${process.env.MATOMO_API_KEY}`
     // const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=CustomReports.getCustomReport&idCustomReport=19&reportUniqueId=CustomReports_getCustomReport_idCustomReport--19&expanded=1&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&showMetadata=0&token_auth=${process.env.MATOMO_API_KEY}`
     const response = await axios.get(url, {
