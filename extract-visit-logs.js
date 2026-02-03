@@ -11,6 +11,8 @@ const getChunkData = async (date, offset) => {
     console.log(`Fetching chunk at offset ${offset}...`)
     
     const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=Live.getLastVisitsDetails&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&method=Live.getLastVisitsDetails&token_auth=${process.env.MATOMO_API_KEY}`
+    // const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=Live.getLastVisitsDetails&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&expanded=1&segment=eventAction%3D%3DsendTransaction-from-gui%3BeventName%3D%24-56,eventName%3D%24-97%3BeventAction%3D%3DsendTransaction-from-gui,eventAction%3D%3DsendTransaction-from-plugin&showMetadata=0&token_auth=${process.env.MATOMO_API_KEY}`
+    // const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=CustomReports.getCustomReport&idCustomReport=19&reportUniqueId=CustomReports_getCustomReport_idCustomReport--19&expanded=1&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&showMetadata=0&token_auth=${process.env.MATOMO_API_KEY}`
     const response = await axios.get(url, {
         timeout: 0, // No timeout
         maxContentLength: Infinity,
@@ -44,9 +46,9 @@ const getAllData = async (date) => {
     console.log('Starting chunked data fetch from Matomo...')
     
     // Ensure segment directory exists
-    await fs.mkdir(`segment`, { recursive: true })
+    await fs.mkdir(`segments/week5`, { recursive: true })
     
-    const filePath = `segment/plugin-${date}.json`
+    const filePath = `segments/week5/${date}.json`
     let offset = 0
     let chunkCount = 0
     let totalRecords = 0
@@ -116,7 +118,7 @@ const getAllData = async (date) => {
 
 const run = async (startDate, endDate) => {
     let currentDate = new Date(startDate)
-    fs.mkdir(`segment`, { recursive: true })
+    fs.mkdir(`segments`, { recursive: true })
     while (currentDate <= endDate) {
         const formattedDate = currentDate.toISOString().split('T')[0]
 
@@ -127,8 +129,8 @@ const run = async (startDate, endDate) => {
 
 const main = async () => {
     try {
-        const startDate = new Date(2025, 8, 26)
-        const endDate = new Date()
+        const startDate = new Date(2026, 0, 26)
+        const endDate = new Date(2026, 1, 2)
         await run(startDate, endDate)
     } catch (error) {
         console.error('Error in main execution:', error)
