@@ -9,16 +9,32 @@ const CHUNK_SIZE = 1000 // Number of records per chunk
 const getChunkData = async (date, offset) => {
     console.log(`getting segment data for date ${date}`)
     console.log(`Fetching chunk at offset ${offset}...`)
-    
-    const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=Live.getLastVisitsDetails&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&token_auth=${process.env.MATOMO_API_KEY}`
+
+    // const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=Live.getLastVisitsDetails&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&token_auth=${process.env.MATOMO_API_KEY}`
     // const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=Live.getLastVisitsDetails&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&expanded=1&segment=eventAction%3D%3DsendTransaction-from-gui%3BeventName%3D%24-56,eventName%3D%24-97%3BeventAction%3D%3DsendTransaction-from-gui,eventAction%3D%3DsendTransaction-from-plugin&showMetadata=0&token_auth=${process.env.MATOMO_API_KEY}`
     // const url = `https://matomo.remix.live/matomo/index.php?module=API&format=JSON&idSite=3&period=day&date=${date}&method=CustomReports.getCustomReport&idCustomReport=19&reportUniqueId=CustomReports_getCustomReport_idCustomReport--19&expanded=1&filter_limit=${CHUNK_SIZE}&filter_offset=${offset}&showMetadata=0&token_auth=${process.env.MATOMO_API_KEY}`
-    const response = await axios.get(url, {
+    const url = `https://matomo.remix.live/matomo/index.php`
+    const params = new URLSearchParams({
+        module: 'API',
+        format: 'JSON',
+        idSite: '3',
+        period: 'day',
+        date: date,
+        method: 'Live.getLastVisitsDetails',
+        filter_limit: CHUNK_SIZE,
+        filter_offset: offset,
+        token_auth: process.env.MATOMO_API_KEY
+    })
+
+    const response = await axios.post(url, params, {
         timeout: 0, // No timeout
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
         httpAgent: new (require('http')).Agent({ keepAlive: true }),
         httpsAgent: new (require('https')).Agent({ keepAlive: true }),
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
         onDownloadProgress: (progressEvent) => {
             const loaded = (progressEvent.loaded / (1024 * 1024)).toFixed(2) // Convert to MB
             if (progressEvent.total) {
@@ -30,7 +46,7 @@ const getChunkData = async (date, offset) => {
             }
         }
     })
-    
+
     return response.data
 }
 
@@ -46,9 +62,9 @@ const getAllData = async (date) => {
     console.log('Starting chunked data fetch from Matomo...')
     
     // Ensure segment directory exists
-    await fs.mkdir(`segments/week5`, { recursive: true })
+    await fs.mkdir(`segments-v2/week13`, { recursive: true })
     
-    const filePath = `segments/week5/${date}.json`
+    const filePath = `segments-v2/week13/${date}.json`
     let offset = 0
     let chunkCount = 0
     let totalRecords = 0
@@ -129,8 +145,8 @@ const run = async (startDate, endDate) => {
 
 const main = async () => {
     try {
-        const startDate = new Date(2026, 0, 26)
-        const endDate = new Date(2026, 1, 2)
+        const startDate = new Date(2026, 2, 26)
+        const endDate = new Date(2026, 2, 30)
         await run(startDate, endDate)
     } catch (error) {
         console.error('Error in main execution:', error)
